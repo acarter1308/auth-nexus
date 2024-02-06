@@ -1,6 +1,6 @@
 <template>
   <div class="auth-form-card">
-    <form id="login-form" autocomplete="off">
+    <form id="login-form" autocomplete="off" @submit.prevent="isFormComplete && authenticate()">
       <div class="header-area">
         <img src="@/assets/icons/KLOGO.png" />
       </div>
@@ -43,14 +43,22 @@ const password = ref('');
 
 const isFormComplete = computed(() => username.value && password.value);
 const isError = ref(false);
+const loading = ref(false);
 
 async function authenticate() {
   try {
+    loading.value = true;
     await keycloakStore.initKeycloakSession(username.value, password.value);
+    await keycloakStore.setNewRealm({
+      label: 'Development',
+      value: 'dev'
+    }); // set dev as default realm for now
     await router.push({ name: 'HomePage' });
   } catch (e) {
     console.log(e);
     isError.value = true;
+  } finally {
+    loading.value = false;
   }
 }
 </script>
@@ -71,8 +79,8 @@ async function authenticate() {
     var(--vue-green-dark)
   );
   border-radius: 10px;
-  box-shadow: 0px 4px 15px #242424;
   animation: breath 4s infinite;
+  box-shadow: 0px 4px 15px #242424;
 }
 
 .header-area {

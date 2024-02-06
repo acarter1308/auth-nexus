@@ -3,7 +3,7 @@
     <span class="label">{{ label }}</span>
     <div class="select-box">
       <Transition>
-        <span :key="modelValue.label" class="select-value">{{ modelValue?.label }}</span>
+        <span :key="modelValue?.label" class="select-value">{{ modelValue?.label }}</span>
       </Transition>
       <div :class="['arrow', optionsOpen ? 'up' : 'down']" />
     </div>
@@ -12,7 +12,7 @@
         <li
           v-for="(option, key) in options"
           :key="key"
-          :class="[option.label === modelValue.label && 'selected']"
+          :class="[option.label === modelValue?.label && 'selected']"
           @click="selectOption(option)"
         >
           {{ option.label }}
@@ -66,7 +66,7 @@ function selectOption(option) {
   padding-right: 0.6rem;
   align-items: center;
   cursor: pointer;
-  background-color: #111111;
+  background-color: transparent;
 }
 
 .options-container {

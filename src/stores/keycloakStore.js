@@ -46,22 +46,20 @@ export const useKeycloakStore = defineStore('keycloak', {
     initTokenRefresher() {
       setTimeout(2500);
       setInterval(() => {
-        keycloakService.refreshAccess();
+        keycloakService.refreshAccess().then((token) => {
+          this.setJWTToken(token);
+        });
       }, 15000);
     },
 
     async endAdminSession() {
-      await keycloakService.endCurrentSession('master', this.userInfo.sub);
+      keycloakService.endSession();
     },
 
     async setNewRealm(realm) {
       this.setSelectedRealm(realm);
-
-      const realmRoles = await keycloakService.fetchRealmRoles(realm.value);
-      const realmUsers = await keycloakService.fetchRealmUsers(realm.value, USER_PARAMS);
-
-      this.setRealmRoles(realmRoles);
-      this.setRealmUsers(realmUsers);
+      await this.refreshAgentList(this.selectedRealm.value);
+      await this.refreshRealmRoles(this.selectedRealm.value);
     },
 
     async fetchAgentDetails(agentId) {
@@ -78,11 +76,26 @@ export const useKeycloakStore = defineStore('keycloak', {
         mappers.toNewAgentRequest(agentModel)
       );
 
-      const realmUsers = await keycloakService.fetchRealmUsers(
+      await this.refreshAgentList(this.selectedRealm.value);
+    },
+
+    async updateAgentDetails(updatedAgentDetails) {
+      await keycloakService.updateAgent(
         this.selectedRealm.value,
-        USER_PARAMS
+        mappers.toAgentUpdateRequest(updatedAgentDetails)
       );
-      this.setRealmUsers(realmUsers);
+
+      await this.refreshAgentList(this.selectedRealm.value);
+    },
+
+    async refreshAgentList(realm) {
+      const agentList = await keycloakService.fetchRealmUsers(realm, USER_PARAMS);
+      this.setRealmUsers(agentList);
+    },
+
+    async refreshRealmRoles(realm) {
+      const roleList = await keycloakService.fetchRealmRoles(realm);
+      this.setRealmRoles(roleList);
     }
   }
 });
@@ -106,6 +119,15 @@ const mappers = {
       realmRoles: newAgent?.selectedRoles,
       attributes: {},
       groups: []
+    };
+  },
+  toAgentUpdateRequest: (agent) => {
+    return {
+      id: agent.id,
+      firstName: agent.firstName,
+      lastName: agent.lastName,
+      enabled: agent?.enabled
+      //TODO: ADD ADDITIONAL EDITABLE PROPERTIES
     };
   }
 };

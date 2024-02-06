@@ -33,10 +33,10 @@ function emitClick() {
 <style lang="scss" scoped>
 .btn-box {
   display: flex;
-  cursor: pointer;
-  padding: 0.25rem;
   color: #888;
   transition: scale 0.15s ease-in-out;
+  padding: 0.3rem 1rem;
+  cursor: pointer;
   &:hover {
     color: #aaa;
     transform: scale(1.015);
