@@ -1,91 +1,101 @@
 import { keycloakClient } from '@/utils/axiosUtil';
-import { refreshAccessToken } from '@/utils/tokenRefreshUtil';
+import {
+  endAdminSession,
+  initAdminSession,
+  refreshAdminSession
+} from '@/utils/keycloakSessionUtil';
 
-const ADMIN_API_PATH = '/admin/realms';
-const SESSION_API_PATH = '/realms/master/protocol/openid-connect/token';
-
-const ACCESS_TOKEN_REQUEST_BODY = {
-  grant_type: 'password',
-  client_id: 'admin-rest-client'
-};
+const ADMIN_API_PATH = (realm) => `/admin/realms/${realm}`;
 
 const client_id = 'admin-rest-client';
 
 let currentToken = null;
 
 export async function fetchAccessToken(username, password) {
-  const tokenResponse = await keycloakClient.post(
-    ACCESS_TOKEN_REQUEST_PATH,
-    { username, password, ...ACCESS_TOKEN_REQUEST_BODY },
-    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-  );
-
+  const tokenResponse = await initAdminSession(username, password);
   currentToken = tokenResponse.data;
   return currentToken;
 }
 
 export function refreshAccess() {
-  refreshAccessToken(currentToken, client_id, 'master').then((response) => {
-    currentToken = response?.data;
+  return new Promise((resolve) => {
+    refreshAdminSession(currentToken, client_id).then((response) => {
+      currentToken = response?.data;
+      resolve(currentToken);
+    });
   });
 }
 
-export function endCurrentSession(realm, userId) {
+export function endSession() {
+  endAdminSession();
+}
+
+export function endUserSessions(realm, userId) {
+  // THIS ENDS ALL ACTIVE USER SESSIONS! NOT JUST THE ONE IN USE BY THE CLIENT
   // const userResponse = await keycloakClient.post(
   //   `${BASE_REQUEST_PATH}/${realm}/users/${userId}/logout`,
   //   {client_id: 'admin-rest-client', refresh_token: currentToken.refresh_token},
   //   { headers: { Authorization: getAuthHeader() } }
   // );
-
   // return userResponse;
-  window.location.href = 'https://accounts.tds.ai/realms/master/protocol/openid-connect/logout';
 }
-
-export function endUserSessions(realm, userId) {}
 
 // TODO: add params for searching later
 export async function fetchRealmUsers(realm, params = '') {
-  const userResponse = await keycloakClient.get(`${ADMIN_API_PATH}/${realm}/users`, {
-    headers: { Authorization: getAuthHeader() },
+  const path = `${ADMIN_API_PATH(realm)}/users`;
+  const options = {
+    headers: {
+      Authorization: getAuthHeader()
+    },
     params
-  });
+  };
 
-  return userResponse.data;
+  const userListResponse = await keycloakClient.get(path, options);
+  return userListResponse.data;
 }
 
 // TODO: add params for searching later
 export async function fetchRealmRoles(realm, params = '') {
-  const roleResponse = await keycloakClient.get(`${ADMIN_API_PATH}/${realm}/roles`, {
-    headers: { Authorization: getAuthHeader() }
-  });
+  const path = `${ADMIN_API_PATH(realm)}/roles`;
+  const options = { headers: { Authorization: getAuthHeader() } };
 
-  return roleResponse.data;
+  const roleListResponse = await keycloakClient.get(path, options);
+  return roleListResponse.data;
 }
 
 export async function fetchAgentDetails(realm, agentId) {
-  const agentDetails = await keycloakClient.get(`${ADMIN_API_PATH}/${realm}/users/${agentId}`, {
-    headers: { Authorization: getAuthHeader() }
-  });
+  const path = `${ADMIN_API_PATH(realm)}/users/${agentId}`;
+  const options = { headers: { Authorization: getAuthHeader() } };
 
+  const agentDetails = await keycloakClient.get(path, options);
   return agentDetails.data;
 }
 
-export async function createNewAgent(realm, agentModel) {
-  const roleResponse = await keycloakClient.post(`${ADMIN_API_PATH}/${realm}/users`, agentModel, {
-    headers: { Authorization: getAuthHeader() }
-  });
+export async function createNewAgent(realm, newAgentModel) {
+  const path = `${ADMIN_API_PATH(realm)}/users`;
+  const options = { headers: { Authorization: getAuthHeader() } };
+  const createResponse = await keycloakClient.post(path, newAgentModel, options);
 
-  return roleResponse.data;
+  return createResponse.data;
+}
+
+export async function updateAgent(realm, agentUpdateModel) {
+  const path = `${ADMIN_API_PATH(realm)}/users/${agentUpdateModel.id}`;
+  const options = { headers: { Authorization: getAuthHeader() } };
+
+  const updateResponse = await keycloakClient.put(path, agentUpdateModel, options);
+  return updateResponse.data;
 }
 
 export default {
-  fetchAccessToken,
+  endSession,
   refreshAccess,
-  endCurrentSession,
+  fetchAccessToken,
   fetchRealmRoles,
   fetchRealmUsers,
   fetchAgentDetails,
-  createNewAgent
+  createNewAgent,
+  updateAgent
 };
 
 function getAuthHeader() {

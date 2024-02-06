@@ -2,8 +2,8 @@
   <div class="agent-create-card" @click="$event.stopPropagation()">
     <form class="form-body">
       <div class="form-row email-user">
-        <TextInput v-model:model-value="email" placeholder="agent@gmail.com" label="Email" />
         <TextInput v-model:model-value="username" placeholder="devagent01" label="Username" />
+        <TextInput v-model:model-value="email" placeholder="agent@gmail.com" label="Email" />
       </div>
       <div class="form-row names">
         <TextInput v-model:model-value="firstName" placeholder="John" label="First Name" />
@@ -164,13 +164,13 @@ function submit() {
     color: #ccc;
     transition: all 0.15s ease-in-out;
     border-radius: 10px;
+    font-size: medium;
+    font-weight: 500;
+    letter-spacing: 1px;
     &:hover {
       background-color: hsla(160, 100%, 50%, 0.65);
       color: #ddd;
     }
-    font-size: medium;
-    font-weight: 500;
-    letter-spacing: 1px;
   }
 }
 </style>

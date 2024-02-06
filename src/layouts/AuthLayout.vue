@@ -8,7 +8,7 @@
 
 <script setup></script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 #content {
   display: flex;
   align-items: center;
